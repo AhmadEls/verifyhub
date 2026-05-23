@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------- Org & Users --------
+
+enum UserRole {
+  ADMIN
+  REVIEWER
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users    User[]
+  sessions VerificationSession[]
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String
+  hashedPassword String
+  role           UserRole @default(REVIEWER)
+  createdAt      DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  auditEntries AuditEntry[]
+}
+
+// -------- Verification --------
+
+enum SessionStatus {
+  PENDING
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  NEEDS_MORE_INFO
+}
+
+enum DocumentType {
+  ID_FRONT
+  ID_BACK
+  SELFIE
+}
+
+model VerificationSession {
+  id          String        @id @default(cuid())
+  publicToken String        @unique @default(cuid())
+  status      SessionStatus @default(PENDING)
+
+  fullName    String?
+  dateOfBirth DateTime?
+  addressLine String?
+  city        String?
+  country     String?
+
+  riskScore Int?
+
+  reviewerNotes String?
+
+  createdAt   DateTime  @default(now())
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  documents    Document[]
+  checks       Check[]
+  auditEntries AuditEntry[]
+
+  @@index([status])
+  @@index([organizationId, status])
+}
+
+model Document {
+  id        String       @id @default(cuid())
+  type      DocumentType
+  url       String
+  fileKey   String
+  createdAt DateTime     @default(now())
+
+  sessionId String
+  session   VerificationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+// -------- Checks --------
+
+enum CheckType {
+  DOCUMENT_VALIDITY
+  FACE_MATCH
+  LIVENESS
+  SANCTIONS_SCREEN
+  PEP_SCREEN
+}
+
+enum CheckStatus {
+  PENDING
+  PASS
+  FAIL
+  REVIEW
+}
+
+model Check {
+  id        String      @id @default(cuid())
+  type      CheckType
+  status    CheckStatus @default(PENDING)
+  score     Float?
+  details   Json?
+  createdAt DateTime    @default(now())
+
+  sessionId String
+  session   VerificationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+// -------- Watchlist --------
+
+enum WatchlistType {
+  SANCTIONS
+  PEP
+}
+
+model WatchlistEntry {
+  id        String        @id @default(cuid())
+  name      String
+  type      WatchlistType
+  country   String?
+  source    String
+  createdAt DateTime      @default(now())
+
+  @@index([name])
+  @@index([type])
+}
+
+// -------- Audit Log --------
+
+enum AuditAction {
+  SESSION_CREATED
+  SESSION_SUBMITTED
+  CHECKS_COMPLETED
+  STATUS_CHANGED
+  NOTE_ADDED
+  USER_LOGIN
+  USER_CREATED
+  USER_DELETED
+}
+
+model AuditEntry {
+  id        String      @id @default(cuid())
+  action    AuditAction
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  sessionId String?
+  session   VerificationSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([actorId])
+  @@index([createdAt])
+}
