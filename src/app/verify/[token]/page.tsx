@@ -16,7 +16,7 @@ export default async function VerifyPage({
 
   if (session.status !== "PENDING") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-[#030712] p-4">
   <div className="max-w-md w-full bg-white rounded-2xl border p-8 text-center shadow-sm">
 
     <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5">
@@ -58,7 +58,7 @@ export default async function VerifyPage({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
+    <div className="min-h-screen bg-[#030712] py-12 px-4 text-white">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-900">Identity Verification</h1>

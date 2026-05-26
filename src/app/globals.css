@@ -121,10 +121,16 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
+    background: #030712;
+    min-height: 100%;
+  }
+
+  body {
     @apply font-sans;
+    background: #030712;
+    color: white;
+    min-height: 100vh;
   }
 }

@@ -122,12 +122,15 @@ export async function POST(
         },
 
         checks: {
-          create: risk.checks.map((check) => ({
-            type: check.type,
-            status: check.status,
-            score: check.score,
-          })),
-        },
+  create: risk.checks.map((check) => ({
+    type: check.type,
+    status: check.status,
+    score: check.score,
+    details: {
+      reason: check.reason,
+    },
+  })),
+},
 
         auditEntries: {
           create: [

@@ -141,11 +141,17 @@ export default async function DashboardPage({
             Verification Operations
           </h1>
 
-          <p className="text-slate-400 mt-2">
-            Monitor verification workflows,
-            compliance reviews, and risk
-            activity.
-          </p>
+          <div className="mt-2 space-y-3">
+  <p className="text-slate-400">
+    Monitor verification workflows,
+    compliance reviews, and risk
+    activity.
+  </p>
+
+  <p className="text-xs uppercase tracking-[0.25em] text-cyan-400">
+    Automated compliance screening powered by configurable AML/KYC rules
+  </p>
+</div>
         </div>
 
         <CreateSessionButton />
@@ -217,12 +223,20 @@ export default async function DashboardPage({
         </div>
 
         {sessions.length === 0 ? (
+  <div className="p-16">
+    <div className="flex flex-col items-center justify-center text-center">
+      <ShieldAlert className="h-10 w-10 text-slate-600 mb-4" />
 
-          <div className="p-16 text-center text-slate-400">
-            No sessions found.
-          </div>
+      <p className="text-lg font-medium text-white">
+        No verification sessions found
+      </p>
 
-        ) : (
+      <p className="mt-2 max-w-md text-sm text-slate-400">
+        Start by creating a new verification request or adjusting the current filters.
+      </p>
+    </div>
+  </div>
+) : (
 
           <table className="w-full text-sm">
 
@@ -245,7 +259,7 @@ export default async function DashboardPage({
                 </th>
 
                 <th className="px-6 py-4 font-medium">
-                  Created
+                  Last Updated
                 </th>
 
                 <th className="px-6 py-4"></th>
@@ -293,7 +307,11 @@ export default async function DashboardPage({
                   </td>
 
                   <td className="px-6 py-5 text-slate-400">
-                    {s.createdAt.toLocaleDateString()}
+                    {new Date(
+  s.reviewedAt ||
+  s.submittedAt ||
+  s.createdAt
+).toLocaleString()}
                   </td>
 
                   <td className="px-6 py-5 text-right">
@@ -314,7 +332,7 @@ export default async function DashboardPage({
                         href={`/dashboard/sessions/${s.id}`}
                         className="text-cyan-400 hover:text-cyan-300 font-medium"
                       >
-                        Review →
+                        Open Case →
                       </Link>
 
                     )}

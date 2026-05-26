@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 type Decision =
@@ -39,20 +40,19 @@ const DECISION_LABELS: Record<
       | "secondary";
   }
 > = {
-
   APPROVED: {
     title: "Approve Verification",
-    verb: "Approve Session",
+    verb: "Approve Case",
     description:
-      "This will finalize the verification session as approved.",
+      "This verification case will be finalized as approved.",
     tone: "default",
   },
 
   REJECTED: {
     title: "Reject Verification",
-    verb: "Reject Session",
+    verb: "Reject Case",
     description:
-      "This verification session will be permanently rejected.",
+      "This verification case will be permanently rejected.",
     tone: "destructive",
   },
 
@@ -60,7 +60,7 @@ const DECISION_LABELS: Record<
     title: "Request Additional Information",
     verb: "Request Information",
     description:
-      "The user will be asked to provide additional verification details.",
+      "The applicant will be required to submit additional verification details.",
     tone: "secondary",
   },
 };
@@ -70,7 +70,6 @@ export function ActionButtons({
 }: {
   sessionId: string;
 }) {
-
   const router = useRouter();
 
   const [open, setOpen] =
@@ -86,49 +85,58 @@ export function ActionButtons({
     useState<string | null>(null);
 
   async function handleSubmit() {
-
     if (!open) return;
 
     setSubmitting(true);
 
     setError(null);
 
-    const res = await fetch(
-      `/api/sessions/${sessionId}/decision`,
-      {
-        method: "POST",
+    try {
+      const res = await fetch(
+        `/api/sessions/${sessionId}/decision`,
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
 
-        body: JSON.stringify({
-          decision: open,
-          notes,
-        }),
-      }
-    );
-
-    setSubmitting(false);
-
-    if (!res.ok) {
-
-      const data =
-        await res.json().catch(() => ({}));
-
-      setError(
-        data.error || "Action failed"
+          body: JSON.stringify({
+            decision: open,
+            notes,
+          }),
+        }
       );
 
-      return;
+      if (!res.ok) {
+        const data =
+          await res.json().catch(() => ({}));
+
+        throw new Error(
+          data.error || "Action failed"
+        );
+      }
+
+      setOpen(null);
+
+      setNotes("");
+
+      router.refresh();
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 250);
+
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Action failed"
+      );
+    } finally {
+      setSubmitting(false);
     }
-
-    setOpen(null);
-
-    setNotes("");
-
-    router.refresh();
   }
 
   const config = open
@@ -138,7 +146,6 @@ export function ActionButtons({
   return (
     <>
       <div className="space-y-3">
-
         <Button
           className="w-full h-12 rounded-xl bg-green-600 hover:bg-green-700 text-white font-medium"
           onClick={() =>
@@ -182,11 +189,9 @@ export function ActionButtons({
         }
       >
         <DialogContent className="bg-[#0F172A] border border-white/10 text-white">
-
           {config && (
             <>
               <DialogHeader>
-
                 <DialogTitle className="text-2xl">
                   {config.title}
                 </DialogTitle>
@@ -197,14 +202,13 @@ export function ActionButtons({
               </DialogHeader>
 
               <div className="space-y-3 py-2">
-
                 <Label htmlFor="notes">
                   Reviewer Notes
                 </Label>
 
                 <Textarea
                   id="notes"
-                  placeholder="Add reviewer context, compliance reasoning, or additional notes..."
+                  placeholder="Add reviewer reasoning, compliance context, or escalation notes..."
                   value={notes}
                   onChange={(e) =>
                     setNotes(e.target.value)
@@ -221,7 +225,6 @@ export function ActionButtons({
               )}
 
               <DialogFooter>
-
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -240,23 +243,23 @@ export function ActionButtons({
                       ? "destructive"
                       : "default"
                   }
-
                   className={
                     config.tone ===
                     "default"
-
                       ? "bg-green-600 hover:bg-green-700"
-
                       : ""
                   }
-
                   onClick={handleSubmit}
-
                   disabled={submitting}
                 >
-                  {submitting
-                    ? "Processing..."
-                    : config.verb}
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    config.verb
+                  )}
                 </Button>
               </DialogFooter>
             </>
